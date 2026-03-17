@@ -124,7 +124,6 @@ local INPUT_QUEUE_SECONDS = .2
 
 local player = {
     active = true,
-    ---@type batteries.vec2
     position = Vector2(0, 0),
     rotation = DIRECTIONS.EAST,
     sprite = {

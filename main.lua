@@ -124,6 +124,7 @@ local INPUT_QUEUE_SECONDS = .2
 
 local player = {
     active = true,
+    ---@type batteries.vec2
     position = Vector2(0, 0),
     rotation = DIRECTIONS.EAST,
     sprite = {
@@ -340,7 +341,7 @@ end
 local ENEMY_REACTION_SECONDS = 1
 
 local function enemy_pathfind_is_goal (v)
-    return v == player.position
+    return v:equals(player.position)
 end
 
 local function enemy_pathfind_neighbours (v)

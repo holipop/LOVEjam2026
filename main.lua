@@ -45,6 +45,7 @@ local function delta_to_direction (dx, dy)
     elseif dx == -1 and dy == 0 then
         return DIRECTIONS.WEST
     end
+    return DIRECTIONS.NORTH -- fallback
 end
 
 local function ternary (a, b, c)
@@ -72,16 +73,10 @@ local input = baton.new({
 
 ---- tile_map ----
 
-local tile_map = {}
+local tile_map = {w=15,h=11,vectors={},entities={}}
 
 function tile_map:at (x, y)
-    for index, tile in ipairs(self) do
-        if tile.position.x == x and tile.position.y == y then
-            return tile
-        end
-    end
-
-    return nil
+    return self.entities[self:vector(x,y)]
 end
 
 function tile_map:add_at (entity, x, y)
@@ -92,30 +87,43 @@ function tile_map:add_at (entity, x, y)
     entity.sprite.position.x = x
     entity.sprite.position.y = y
 
-    tile_map[#tile_map + 1] = entity
+    self.entities[self:vector(x,y)] = entity
 end
 
 function tile_map:add_random (entity)
     local x, y = 0, 0
     repeat
-        x = love.math.random(0, 15)
-        y = love.math.random(0, 11)
+        x = love.math.random(0, self.w)
+        y = love.math.random(0, self.h)
     until not self:at(x, y)
 
     self:add_at(entity, x, y)
 end
 
 function tile_map:remove_at (x, y)
-    local entity
-    for index, tile in ipairs(self) do
-        if tile.position.x == x and tile.position.y == y then
-            entity = table.remove(self, index)
-            break
-        end
-    end
+    local entity = self.entities[self:vector(x,y)]
+    self.entities[self:vector(x,y)] = nil
     return entity
 end
 
+for x=0,tile_map.w do
+    local column = {}
+    for y=0,tile_map.h do
+        table.insert(column,Vector2(x,y))
+    end
+    table.insert(tile_map.vectors,column)
+end
+
+function tile_map:vector (x, y)
+    local column = self.vectors[x+1]
+    if column then
+        return column[y+1]
+    end
+end
+
+function tile_map:within (x, y)
+    return x>=0 and x<=self.w and y>=0 and y<=self.h
+end
 
 ---- player ----
 
@@ -347,13 +355,13 @@ local function enemy_pathfind_neighbours (v)
     for index, dir in pairs(DIRECTIONS) do
         local dx = DX_DIRECTIONS[dir]
         local dy = DY_DIRECTIONS[dir]
-
-        local entity = tile_map:at(v.x + dx, v.y + dy)
-
-        if entity and entity.position:equals(player.position) then
-            neighbors[#neighbors + 1] = entity.position
-        elseif not entity then
-            neighbors[#neighbors + 1] = Vector2(v.x + dx, v.y + dy)
+        if tile_map:within(v.x + dx, v.y + dy) then
+            local entity = tile_map:at(v.x + dx, v.y + dy)
+            if entity and entity.position:equals(player.position) then
+                neighbors[#neighbors + 1] = tile_map:vector(v.x + dx, v.y + dy)
+            elseif not entity then
+                neighbors[#neighbors + 1] = tile_map:vector(v.x + dx, v.y + dy)
+            end
         end
     end
     return neighbors
@@ -402,7 +410,7 @@ function Enemy:new(x, y)
 
             local path = pathfind(instance.pathfind_args)
             if path then
-                local next = path[2]
+                local next = path[2] or path[1]
                 local dx = next.x - instance.position.x
                 local dy = next.y - instance.position.y
 
@@ -471,6 +479,16 @@ function love.load ()
     end
     tile_map:add_random(Enemy:new(0, 0))
     tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
+    tile_map:add_random(Enemy:new(0, 0))
 
     tile_map:add_random(player)
 
@@ -482,7 +500,7 @@ function love.update (dt)
     flux.update(dt)
     input:update()
 
-    for index, entity in ipairs(tile_map) do
+    for _, entity in pairs(tile_map.entities) do
         entity:update(dt)
     end
 end
@@ -496,7 +514,7 @@ function love.draw ()
         end
     end
 
-    for index, entity in ipairs(tile_map) do
+    for _, entity in pairs(tile_map.entities) do
         love.graphics.push("all")
         entity:draw()
         love.graphics.pop()

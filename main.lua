@@ -73,7 +73,12 @@ local input = baton.new({
 
 ---- tile_map ----
 
-local tile_map = {w=15,h=11,vectors={},entities={}}
+local tile_map = {
+    w = 15,
+    h = 11,
+    vectors = {},
+    entities = {}
+}
 
 function tile_map:at (x, y)
     return self.entities[self:vector(x,y)]
@@ -106,23 +111,23 @@ function tile_map:remove_at (x, y)
     return entity
 end
 
-for x=0,tile_map.w do
+for x = 0, tile_map.w do
     local column = {}
-    for y=0,tile_map.h do
-        table.insert(column,Vector2(x,y))
+    for y = 0, tile_map.h do
+        table.insert(column, Vector2(x, y))
     end
-    table.insert(tile_map.vectors,column)
+    table.insert(tile_map.vectors, column)
 end
 
 function tile_map:vector (x, y)
-    local column = self.vectors[x+1]
+    local column = self.vectors[x + 1]
     if column then
-        return column[y+1]
+        return column[y + 1]
     end
 end
 
 function tile_map:within (x, y)
-    return x>=0 and x<=self.w and y>=0 and y<=self.h
+    return x >= 0 and x <= self.w and y >= 0 and y <= self.h
 end
 
 ---- player ----

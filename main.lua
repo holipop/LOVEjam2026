@@ -13,6 +13,7 @@ local pathfind = require("lib.batteries.pathfind")
 
 ---- CONSTANTS ----
 
+local TILE_LENGTH = 50
 local DIRECTIONS = {
     NORTH = 0,
     EAST = 1,
@@ -45,8 +46,6 @@ local function delta_to_direction (dx, dy)
         return DIRECTIONS.WEST
     end
 end
-
-local TILE_LENGTH = 50
 
 local function ternary (a, b, c)
     if a then 
